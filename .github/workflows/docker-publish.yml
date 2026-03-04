@@ -1,4 +1,4 @@
-name: Check for new SpoofDPI release and build Docker image
+name: Check for new maverick-mcp release and build Docker image
 
 on:
   schedule:
