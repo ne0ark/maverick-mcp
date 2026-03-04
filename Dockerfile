@@ -11,7 +11,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     ENV_FILE="/config/.env" \
+    NUMBA_CACHE_DIR="/config/.numba_cache" \
     PORT=8000 \
+    RUNTIME_DIR="/config" \
+    UMASK=002 \
     UV_CACHE_DIR=/tmp/uv-cache
 
 RUN apt-get update \
@@ -39,9 +42,10 @@ RUN pip install --upgrade pip \
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Unraid-friendly writable app dir.
-RUN useradd --create-home --home-dir /config --shell /usr/sbin/nologin mcp
-USER mcp
+# Unraid-friendly writable app dir (UID:GID 99:100 => nobody:users on Unraid).
+RUN mkdir -p /config/.numba_cache \
+    && chown -R 99:100 /config
+USER 99:100
 WORKDIR /config
 
 # Default MCP HTTP/SSE port used by most Unraid templates.
