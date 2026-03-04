@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.title="maverick-mcp" \
       org.opencontainers.image.source="https://github.com/wshobson/maverick-mcp"
 
 ARG MAVERICK_MCP_REF=main
-ARG TA_LIB_VERSION=0.4.0
+ARG TA_LIB_VERSION=0.6.4
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -21,7 +21,8 @@ RUN apt-get update \
         curl \
         git \
         tini \
-    && curl -fsSL "https://sourceforge.net/projects/ta-lib/files/ta-lib/${TA_LIB_VERSION}/ta-lib-${TA_LIB_VERSION}-src.tar.gz/download" -o /tmp/ta-lib.tgz \
+    && curl -fsSL "https://github.com/TA-Lib/ta-lib/releases/download/v${TA_LIB_VERSION}/ta-lib-${TA_LIB_VERSION}-src.tar.gz" -o /tmp/ta-lib.tgz \
+    && tar -tzf /tmp/ta-lib.tgz >/dev/null \
     && tar -xzf /tmp/ta-lib.tgz -C /tmp \
     && cd "/tmp/ta-lib-${TA_LIB_VERSION}" \
     && ./configure --prefix=/usr \
