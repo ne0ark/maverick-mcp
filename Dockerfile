@@ -41,6 +41,7 @@ RUN apt-get update \
 # Install directly from upstream so the image always tracks the requested ref/tag.
 RUN pip install --upgrade pip \
     && pip install uv \
+    && pip install vectorbt \
     && pip install "git+https://github.com/wshobson/maverick-mcp.git@${MAVERICK_MCP_REF}"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
