@@ -12,25 +12,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check latest commit from maverick-mcp main branch
+      - name: Check latest source commit from maverick-mcp main branch
         id: check_main
         run: |
-          latest_commit=$(curl -s https://api.github.com/repos/wshobson/maverick-mcp/commits/main | jq -r .sha)
-          echo "Latest main commit is $latest_commit"
+          commits_response=$(curl -fsSL "https://api.github.com/repos/wshobson/maverick-mcp/commits?sha=main&per_page=20")
+          latest_commit=$(echo "$commits_response" | jq -r '[.[] | select(.commit.message | startswith("Update latest main commit to ") | not)][0].sha')
+
+          if [ -z "$latest_commit" ] || [ "$latest_commit" = "null" ]; then
+            echo "Failed to resolve latest source commit from main history."
+            exit 1
+          fi
+
+          echo "Latest source main commit is $latest_commit"
 
           if [ -f .last_main_commit ]; then
             last_known_commit=$(cat .last_main_commit)
-            echo "Last known main commit is $last_known_commit"
+            echo "Last known main source commit is $last_known_commit"
           else
             last_known_commit=""
           fi
 
           if [ "$latest_commit" != "$last_known_commit" ]; then
-            echo "New main commit detected: $latest_commit"
+            echo "New source main commit detected: $latest_commit"
             echo "latest_commit=$latest_commit" >> $GITHUB_ENV
             echo "latest_commit_short=${latest_commit:0:7}" >> $GITHUB_ENV
           else
-            echo "No new commit found on main."
+            echo "No new source commit found on main."
             exit 0
           fi
 
