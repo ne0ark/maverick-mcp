@@ -7,7 +7,7 @@ This file documents recommended Unraid template variables for running the
 
 - The image runs as non-root `UID:GID 99:100` (`nobody:users` on Unraid).
 - `/config` is the container working directory and should be mapped to appdata.
-- Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD` from `${RUNTIME_DIR}`.
+- Entrypoint (under `tini`) loads `/config/.env` when present, then executes container `CMD` from `${RUNTIME_DIR}`.
 - Entrypoint applies `${UMASK}` (default `002`) for Unraid-friendly file permissions.
 - Default command runs the upstream SSE server via:
   `uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
@@ -27,11 +27,13 @@ This file documents recommended Unraid template variables for running the
 
 | Key | Default | Required | Description |
 |---|---|---:|---|
-| `ENV_FILE` | `/config/.env` | No | In-container `.env` file path loaded by entrypoint when file exists. |
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Writable cache directory used by Numba/pandas-ta to avoid JIT cache errors on read-only site-packages. |
 | `UMASK` | `002` | No | Process umask applied at startup for group-writable files on Unraid shares. |
 | `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
 | `RUNTIME_DIR` | `/config` | No | Working directory used for runtime writes (SQLite DB and logs when app uses relative paths). |
+| `REDIS_ENABLED` | `true` | No | Enables built-in Redis startup and Redis cache integration by default. |
+| `ENABLE_REDIS_CACHE` | `true` | No | Compatibility toggle kept enabled so upstream cache integration uses Redis. |
+| `USE_REDIS_CACHE` | `true` | No | Compatibility toggle kept enabled so upstream cache integration uses Redis. |
 
 ## Path mappings
 
@@ -40,6 +42,7 @@ This file documents recommended Unraid template variables for running the
 | `/config` | `/mnt/user/appdata/maverick-mcp` | Yes | Writable working directory for container user and location for persisted `.env`. |
 
 ## `.env` file location (Unraid PATH requirement)
+
 
 Store the environment file on the Unraid host path mapped for this container,
 for example:
@@ -55,11 +58,11 @@ You can load environment values either way:
    --env-file=/mnt/user/appdata/maverick-mcp/.env
    ```
 
-2. Built-in entrypoint `.env` loading via `ENV_FILE=/config/.env` (default).
+2. Built-in entrypoint `.env` loading from fixed path `/config/.env`.
 
-> The image does **not** ship with a pre-created `.env` file. Create it on the host
-> at your mapped appdata path (for example `/mnt/user/appdata/maverick-mcp/.env`)
-> so it appears in the container at `/config/.env`.
+> The container does **not** generate `.env` automatically.
+> Use the downloaded project's `.env.example` and create your own host `.env` at
+> `/mnt/user/appdata/maverick-mcp/.env` so it appears in the container at `/config/.env`.
 
 If `/config` is not writable for the container user (`99:100`), entrypoint falls back to
 `/tmp/maverick-mcp` as runtime directory and `/tmp/.numba_cache` for Numba cache writes.
@@ -71,7 +74,13 @@ In that fallback mode, `DATABASE_URL` defaults to `sqlite:////tmp/maverick-mcp/m
 - This traceback pattern (`pandas_ta` -> `numba` cache locator error) is not a
   TA-Lib C version mismatch; it is a cache-path/writeability issue.
 
-Use `.env.example` from the upstream project as the source of keys and values,
+## Redis/SQLite runtime defaults
+
+- SQLite is enabled by default through `DATABASE_URL` fallback to a local file in `${RUNTIME_DIR}`.
+- Redis is started in-container by entrypoint (127.0.0.1:6379) when Redis toggles are enabled (default).
+- `REDIS_URL` defaults to `redis://127.0.0.1:6379/0` if unset.
+
+Use `.env.example` from the downloaded upstream project as the source of keys and values,
 then place your filled file at that Unraid path.
 
 ## Port forwarding (must be defined in Docker/Unraid)

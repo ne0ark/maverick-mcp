@@ -10,12 +10,14 @@ ARG TA_LIB_VERSION=0.6.4
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    ENV_FILE="/config/.env" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
     PORT=8000 \
     RUNTIME_DIR="/config" \
     UMASK=002 \
-    UV_CACHE_DIR=/tmp/uv-cache
+    UV_CACHE_DIR=/tmp/uv-cache \
+    REDIS_ENABLED=true \
+    ENABLE_REDIS_CACHE=true \
+    USE_REDIS_CACHE=true
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -23,6 +25,7 @@ RUN apt-get update \
         ca-certificates \
         curl \
         git \
+        redis-server \
         tini \
     && curl -fsSL "https://github.com/TA-Lib/ta-lib/releases/download/v${TA_LIB_VERSION}/ta-lib-${TA_LIB_VERSION}-src.tar.gz" -o /tmp/ta-lib.tgz \
     && tar -tzf /tmp/ta-lib.tgz >/dev/null \
