@@ -5,9 +5,10 @@ This file documents recommended Unraid template variables for running the
 
 ## Container behavior summary
 
-- The image runs as non-root user `mcp`.
+- The image runs as non-root `UID:GID 99:100` (`nobody:users` on Unraid).
 - `/config` is the container working directory and should be mapped to appdata.
-- Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD`.
+- Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD` from `${RUNTIME_DIR}`.
+- Entrypoint applies `${UMASK}` (default `002`) for Unraid-friendly file permissions.
 - Default command runs the upstream SSE server via:
   `uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
 - Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE deployment.
@@ -28,7 +29,9 @@ This file documents recommended Unraid template variables for running the
 |---|---|---:|---|
 | `ENV_FILE` | `/config/.env` | No | In-container `.env` file path loaded by entrypoint when file exists. |
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Writable cache directory used by Numba/pandas-ta to avoid JIT cache errors on read-only site-packages. |
+| `UMASK` | `002` | No | Process umask applied at startup for group-writable files on Unraid shares. |
 | `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
+| `RUNTIME_DIR` | `/config` | No | Working directory used for runtime writes (SQLite DB and logs when app uses relative paths). |
 
 ## Path mappings
 
@@ -58,8 +61,9 @@ You can load environment values either way:
 > at your mapped appdata path (for example `/mnt/user/appdata/maverick-mcp/.env`)
 > so it appears in the container at `/config/.env`.
 
-If `/config` is not writable for the container user, entrypoint falls back to
-`/tmp/.numba_cache` for Numba cache writes.
+If `/config` is not writable for the container user (`99:100`), entrypoint falls back to
+`/tmp/maverick-mcp` as runtime directory and `/tmp/.numba_cache` for Numba cache writes.
+In that fallback mode, `DATABASE_URL` defaults to `sqlite:////tmp/maverick-mcp/maverick_mcp.db`.
 
 ## TA-Lib version note
 
