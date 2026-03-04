@@ -10,7 +10,6 @@ ARG TA_LIB_VERSION=0.6.4
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    MCP_COMMAND="python -m maverick_mcp" \
     ENV_FILE="/config/.env" \
     PORT=8000
 
@@ -34,6 +33,7 @@ RUN apt-get update \
 
 # Install directly from upstream so the image always tracks the requested ref/tag.
 RUN pip install --upgrade pip \
+    && pip install uv \
     && pip install "git+https://github.com/wshobson/maverick-mcp.git@${MAVERICK_MCP_REF}"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -47,4 +47,4 @@ WORKDIR /config
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["sh", "-c", "${MCP_COMMAND}"]
+CMD ["sh", "-c", "exec uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]

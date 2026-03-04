@@ -8,8 +8,9 @@ This file documents recommended Unraid template variables for running the
 - The image runs as non-root user `mcp`.
 - `/config` is the container working directory and should be mapped to appdata.
 - Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD`.
-- Startup command is controlled by `MCP_COMMAND` (defaults to module execution).
-- Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE style deployment.
+- Default command runs the upstream SSE server via:
+  `uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
+- Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE deployment.
 
 ## Unraid template fields
 
@@ -24,9 +25,8 @@ This file documents recommended Unraid template variables for running the
 
 | Key | Default | Required | Description |
 |---|---|---:|---|
-| `MCP_COMMAND` | `python -m maverick_mcp` | No | Default command used by `CMD` (`sh -c ${MCP_COMMAND}`); avoids missing console-script issues. |
 | `ENV_FILE` | `/config/.env` | No | In-container `.env` file path loaded by entrypoint when file exists. |
-| `PORT` | `8000` | Recommended | Service port value used by your runtime command/application config. |
+| `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
 
 ## Path mappings
 
@@ -57,14 +57,14 @@ then place your filled file at that Unraid path.
 
 ## Port forwarding (must be defined in Docker/Unraid)
 
-The image includes `EXPOSE 8000`, and Unraid should map host/container ports for
-HTTP/SSE deployments.
+The image includes `EXPOSE 8000`, and default container `CMD` serves on
+container port `8000`.
 
 | Container Port | Host Port (example) | Protocol | Required |
 |---|---|---|---:|
-| `8000` (or `${PORT}`) | `8000` (or custom like `18000`) | TCP | Yes (for HTTP/SSE access) |
+| `8000` | `8000` (or custom like `18000`) | TCP | Yes (for HTTP/SSE access) |
 
-Example mapping when `PORT=8000`:
+Example mapping:
 
 - Container Port: `8000`
 - Host Port: `8000` (or another free port like `18000`)
@@ -73,5 +73,5 @@ Example mapping when `PORT=8000`:
 
 1. Keep `/config` mapped and writable.
 2. Keep `.env` persisted in Unraid appdata path (not ephemeral container FS).
-3. Keep Unraid port mapping aligned with `PORT`.
+3. Keep Unraid port mapping aligned with container `CMD` port.
 4. Keep `EXPOSE` and docs aligned if default port changes.
