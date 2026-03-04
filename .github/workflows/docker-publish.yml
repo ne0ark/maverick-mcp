@@ -1,5 +1,8 @@
 name: Check for new maverick-mcp main commit
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '*/5 * * * *' # Runs every 5 minutes
@@ -15,7 +18,8 @@ jobs:
       - name: Check latest source commit from maverick-mcp main branch
         id: check_main
         run: |
-          commits_response=$(curl -fsSL "https://api.github.com/repos/wshobson/maverick-mcp/commits?sha=main&per_page=20")
+          source_repo="BobDenar1212/maverick-mcp"
+          commits_response=$(curl -fsSL "https://api.github.com/repos/${source_repo}/commits?sha=main&per_page=20")
           latest_commit=$(echo "$commits_response" | jq -r '[.[] | select(.commit.message | startswith("Update latest main commit to ") | not)][0].sha')
 
           if [ -z "$latest_commit" ] || [ "$latest_commit" = "null" ]; then
@@ -43,8 +47,15 @@ jobs:
 
       - name: Save the new main commit
         if: env.latest_commit
+        env:
+          EXPECTED_REPO: BobDenar1212/maverick-mcp
         run: |
-          echo ${{ env.latest_commit }} > .last_main_commit
+          if [ "${GITHUB_REPOSITORY}" != "${EXPECTED_REPO}" ]; then
+            echo "Skipping state commit/push for fork repository ${GITHUB_REPOSITORY}."
+            exit 0
+          fi
+
+          echo "${{ env.latest_commit }}" > .last_main_commit
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add .last_main_commit

@@ -11,6 +11,8 @@ ARG TA_LIB_VERSION=0.6.4
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
+    HOME="/config" \
+    XDG_CACHE_HOME="/config/.cache" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
     PORT=8000 \
     RUNTIME_DIR="/config" \
@@ -48,7 +50,7 @@ RUN pip install --upgrade pip \
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir (UID:GID 99:100 => nobody:users on Unraid).
-RUN mkdir -p /config/.numba_cache \
+RUN mkdir -p /config/.numba_cache /config/.cache \
     && chown -R 99:100 /config
 USER 99:100
 WORKDIR /config

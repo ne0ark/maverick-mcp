@@ -27,6 +27,8 @@ This file documents recommended Unraid template variables for running the
 
 | Key | Default | Required | Description |
 |---|---|---:|---|
+| `HOME` | `/config` | No | Home directory override used by Python libs that derive cache paths from `$HOME`. |
+| `XDG_CACHE_HOME` | `/config/.cache` | No | Base writable cache directory for libs that default to `/.cache` when `$HOME` is unset (for example yfinance). |
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Writable cache directory used by Numba/pandas-ta to avoid JIT cache errors on read-only site-packages. |
 | `UMASK` | `002` | No | Process umask applied at startup for group-writable files on Unraid shares. |
 | `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
@@ -59,14 +61,16 @@ You can load environment values either way:
    --env-file=/mnt/user/appdata/maverick-mcp/.env
    ```
 
-2. Built-in entrypoint `.env` loading from `${ENV_FILE}` (default `/config/.env`). If the file is absent, entrypoint also checks `/workspace/.env` before proceeding with Docker-provided env vars only.
+2. Built-in entrypoint `.env` loading from `${ENV_FILE}` (default `${RUNTIME_DIR}/.env`, which defaults to `/config/.env`). If the preferred file is missing/unreadable, entrypoint also checks `${RUNTIME_DIR}/.env`, `/config/.env`, and `/workspace/.env` before proceeding with Docker-provided env vars only.
 
 > The container does **not** generate `.env` automatically.
 > Use the downloaded project's `.env.example` and create your own host `.env` at
 > `/mnt/user/appdata/maverick-mcp/.env` so it appears in the container at `/config/.env`.
+> Ensure the file is readable by container user `99:100`, otherwise entrypoint will skip it and continue with Docker env vars.
 
 If `/config` is not writable for the container user (`99:100`), entrypoint falls back to
-`/tmp/maverick-mcp` as runtime directory and `/tmp/.numba_cache` for Numba cache writes.
+`/tmp/maverick-mcp` as runtime directory, ensures a writable `$HOME`, and redirects cache writes
+(e.g. `$XDG_CACHE_HOME`, `NUMBA_CACHE_DIR`) into writable `/tmp` paths when needed.
 In that fallback mode, `DATABASE_URL` defaults to `sqlite:////tmp/maverick-mcp/maverick_mcp.db`.
 
 ## TA-Lib version note
