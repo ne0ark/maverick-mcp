@@ -11,7 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     ENV_FILE="/config/.env" \
-    PORT=8000
+    PORT=8000 \
+    UV_CACHE_DIR=/tmp/uv-cache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -47,4 +48,4 @@ WORKDIR /config
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["uv", "run", "python", "-m", "maverick_mcp.api.server", "--transport", "sse", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "exec uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
