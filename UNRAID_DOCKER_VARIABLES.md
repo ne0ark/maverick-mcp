@@ -7,11 +7,11 @@ This file documents recommended Unraid template variables for running the
 
 - The image runs as non-root `UID:GID 99:100` (`nobody:users` on Unraid).
 - `/config` is the container working directory and should be mapped to appdata.
-- Entrypoint (under `tini`) loads `/config/.env` when present, then executes container `CMD` from `${RUNTIME_DIR}`.
+- Entrypoint (under `tini`) loads `.env` from `${ENV_FILE}` (default `/config/.env`) with fallback checks, then executes container `CMD` from `${RUNTIME_DIR}`.
 - Entrypoint applies `${UMASK}` (default `002`) for Unraid-friendly file permissions.
 - Default command runs the upstream SSE server via:
   `uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
-- Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE deployment.
+- Dockerfile installs TA-Lib and `vectorbt` dependencies, and exposes TCP `8000` by default for HTTP/SSE deployment.
 - TA-Lib C library build defaults to `0.6.4` (via `TA_LIB_VERSION` build arg), which is the recommended upstream release line for current builds.
 
 ## Unraid template fields
@@ -31,6 +31,7 @@ This file documents recommended Unraid template variables for running the
 | `UMASK` | `002` | No | Process umask applied at startup for group-writable files on Unraid shares. |
 | `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
 | `RUNTIME_DIR` | `/config` | No | Working directory used for runtime writes (SQLite DB and logs when app uses relative paths). |
+| `ENV_FILE` | `/config/.env` | No | Preferred `.env` path read by entrypoint before startup initialization. |
 | `REDIS_ENABLED` | `true` | No | Enables built-in Redis startup and Redis cache integration by default. |
 | `ENABLE_REDIS_CACHE` | `true` | No | Compatibility toggle kept enabled so upstream cache integration uses Redis. |
 | `USE_REDIS_CACHE` | `true` | No | Compatibility toggle kept enabled so upstream cache integration uses Redis. |
@@ -58,7 +59,7 @@ You can load environment values either way:
    --env-file=/mnt/user/appdata/maverick-mcp/.env
    ```
 
-2. Built-in entrypoint `.env` loading from fixed path `/config/.env`.
+2. Built-in entrypoint `.env` loading from `${ENV_FILE}` (default `/config/.env`). If the file is absent, entrypoint also checks `/workspace/.env` before proceeding with Docker-provided env vars only.
 
 > The container does **not** generate `.env` automatically.
 > Use the downloaded project's `.env.example` and create your own host `.env` at

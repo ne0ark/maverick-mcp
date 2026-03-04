@@ -1,16 +1,24 @@
 #!/bin/sh
 set -eu
 
-env_file="/config/.env"
+configured_env_file="${ENV_FILE:-/config/.env}"
+env_file=""
 
-if [ -f "${env_file}" ]; then
+for candidate in "${configured_env_file}" "/config/.env" "/workspace/.env"; do
+  if [ -n "${candidate}" ] && [ -f "${candidate}" ]; then
+    env_file="${candidate}"
+    break
+  fi
+done
+
+if [ -n "${env_file}" ]; then
   echo "Loading environment from ${env_file}"
   set -a
   # shellcheck disable=SC1090
   . "${env_file}"
   set +a
 else
-  echo "No env file found at ${env_file}; set TIINGO_API_KEY via .env or Docker env vars." >&2
+  echo "No .env file found (checked: ${configured_env_file}, /config/.env, /workspace/.env); relying on Docker env vars." >&2
 fi
 
 umask "${UMASK:-002}"
