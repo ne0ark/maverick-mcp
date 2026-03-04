@@ -10,7 +10,7 @@ This file documents recommended Unraid template variables for running the
 - Entrypoint (under `tini`) loads `.env` from `${ENV_FILE}` (default `/config/.env`) with fallback checks, then executes container `CMD` from `${RUNTIME_DIR}`.
 - Entrypoint applies `${UMASK}` (default `002`) for Unraid-friendly file permissions.
 - Default command runs the upstream SSE server via:
-  `uv run --with vectorbt python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
+  `python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
 - Dockerfile installs TA-Lib and `vectorbt` dependencies, and exposes TCP `8000` by default for HTTP/SSE deployment.
 - TA-Lib C library build defaults to `0.6.4` (via `TA_LIB_VERSION` build arg), which is the recommended upstream release line for current builds.
 
@@ -81,8 +81,8 @@ In that fallback mode, `DATABASE_URL` defaults to `sqlite:////tmp/maverick-mcp/m
 
 ## Backtesting/VectorBT warning behavior
 
-- The image now installs `vectorbt` during build, and the default startup command
-  runs `uv` with `--with vectorbt`, so the runtime warning
+- The image now installs `vectorbt` during build, and default startup runs the
+  server directly with Python from that same environment, so the runtime warning
   `Backtesting module not available - VectorBT may not be installed` should no
   longer appear in normal startup logs.
 - If you still see that warning, it typically means the container is running an
