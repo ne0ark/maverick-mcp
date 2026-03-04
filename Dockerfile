@@ -2,9 +2,10 @@ FROM python:3.12-slim
 
 LABEL org.opencontainers.image.title="maverick-mcp" \
       org.opencontainers.image.description="Container image for the Maverick MCP server" \
-      org.opencontainers.image.source="https://github.com/wshobson/maverick-mcp"
+      org.opencontainers.image.source="https://github.com/BobDenar1212/maverick-mcp"
 
-ARG MAVERICK_MCP_REF=main
+ARG MAVERICK_MCP_REF=fix/mcp-discovery-and-docker-port
+ARG MAVERICK_MCP_REPO=https://github.com/BobDenar1212/maverick-mcp.git
 ARG TA_LIB_VERSION=0.6.4
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -42,7 +43,7 @@ RUN apt-get update \
 RUN pip install --upgrade pip \
     && pip install uv \
     && pip install vectorbt \
-    && pip install "git+https://github.com/wshobson/maverick-mcp.git@${MAVERICK_MCP_REF}"
+    && pip install "git+${MAVERICK_MCP_REPO}@${MAVERICK_MCP_REF}"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
