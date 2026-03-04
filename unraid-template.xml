@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>maverick-mcp</Name>
+  <Repository>ne0ark/maverick-mcp:latest</Repository>
+  <Registry>https://hub.docker.com/r/ne0ark/maverick-mcp</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/ne0ark/maverick-mcp/issues</Support>
+  <Project>https://github.com/ne0ark/maverick-mcp</Project>
+  <Overview>
+    Maverick MCP – a Model Context Protocol (MCP) server providing AI-powered
+    stock-trading tools (technical analysis, screening, options data, etc.).
+    Connect any MCP-compatible AI client to this SSE endpoint.
+    Place your API keys in /mnt/user/appdata/maverick-mcp/.env before starting.
+  </Overview>
+  <Category>Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/ne0ark/maverick-mcp/main/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/ne0ark/maverick-mcp/main/.github/icon.png</Icon>
+  <ExtraParams>--env-file=/mnt/user/appdata/maverick-mcp/.env</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+
+  <!-- Port -->
+  <Config
+    Name="MCP SSE Port"
+    Target="8000"
+    Default="8000"
+    Mode="tcp"
+    Description="HTTP/SSE port exposed by the Maverick MCP server."
+    Type="Port"
+    Display="always"
+    Required="true"
+    Mask="false">8000</Config>
+
+  <!-- Paths -->
+  <Config
+    Name="AppData / Config"
+    Target="/config"
+    Default="/mnt/user/appdata/maverick-mcp"
+    Mode="rw"
+    Description="Persistent config directory. Place your .env file here."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/maverick-mcp</Config>
+
+  <!-- Environment variables -->
+  <Config
+    Name="ENV_FILE"
+    Target="ENV_FILE"
+    Default="/config/.env"
+    Description="Path (inside the container) to the .env file loaded by the entrypoint."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">/config/.env</Config>
+
+  <Config
+    Name="PORT"
+    Target="PORT"
+    Default="8000"
+    Description="Port the MCP server binds to inside the container. Must match the port mapping above."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">8000</Config>
+</Container>

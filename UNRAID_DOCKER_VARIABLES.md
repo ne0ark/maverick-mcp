@@ -3,20 +3,25 @@
 This file documents recommended Unraid template variables for running the
 `maverick-mcp` container.
 
+> **Community Applications users:** an Unraid CA template is available at
+> [`unraid-template.xml`](./unraid-template.xml) in this repository.  Add it
+> via *Apps → Install Container from URL* using:
+> `https://raw.githubusercontent.com/ne0ark/maverick-mcp/main/unraid-template.xml`.
+
 ## Container behavior summary
 
 - The image runs as non-root user `mcp`.
 - `/config` is the container working directory and should be mapped to appdata.
 - Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD`.
 - Default command runs the upstream SSE server via:
-  `uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
+  `python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
 - Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE deployment.
 
 ## Unraid template fields
 
 | Unraid Field | Value / Example | Required | Description |
 |---|---|---:|---|
-| Repository | `ghcr.io/<your-namespace>/maverick-mcp:latest` | Yes | Image to run. |
+| Repository | `ne0ark/maverick-mcp:latest` | Yes | Image to run. |
 | Network Type | `bridge` | Yes | Use bridge so explicit port mapping is visible/manageable. |
 | Console shell command | `bash` | No | Convenience only. |
 | Extra Parameters | `--env-file=/mnt/user/appdata/maverick-mcp/.env` | Recommended | Docker-level env injection from Unraid host path. |
