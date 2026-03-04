@@ -1,6 +1,18 @@
 #!/bin/sh
 set -eu
 
+env_file="/config/.env"
+
+if [ -f "${env_file}" ]; then
+  echo "Loading environment from ${env_file}"
+  set -a
+  # shellcheck disable=SC1090
+  . "${env_file}"
+  set +a
+else
+  echo "No env file found at ${env_file}; set TIINGO_API_KEY via .env or Docker env vars." >&2
+fi
+
 umask "${UMASK:-002}"
 
 : "${REDIS_ENABLED:=true}"
@@ -8,12 +20,24 @@ umask "${UMASK:-002}"
 : "${USE_REDIS_CACHE:=true}"
 export REDIS_ENABLED ENABLE_REDIS_CACHE USE_REDIS_CACHE
 
-runtime_dir="${RUNTIME_DIR:-/config}"
-if [ ! -d "${runtime_dir}" ]; then
-  mkdir -p "${runtime_dir}" 2>/dev/null || true
-fi
+ensure_writable_dir() {
+  dir="$1"
 
-if [ ! -w "${runtime_dir}" ]; then
+  if [ ! -d "${dir}" ]; then
+    mkdir -p "${dir}" 2>/dev/null || return 1
+  fi
+
+  [ -w "${dir}" ] || return 1
+
+  probe_file="${dir}/.writable.$$"
+  : >"${probe_file}" 2>/dev/null || return 1
+  rm -f "${probe_file}" 2>/dev/null || true
+
+  return 0
+}
+
+runtime_dir="${RUNTIME_DIR:-/config}"
+if ! ensure_writable_dir "${runtime_dir}"; then
   fallback_runtime_dir="/tmp/maverick-mcp"
   mkdir -p "${fallback_runtime_dir}"
   runtime_dir="${fallback_runtime_dir}"
@@ -22,10 +46,8 @@ fi
 
 cd "${runtime_dir}"
 
-env_file="/config/.env"
-
 numba_cache_dir="${NUMBA_CACHE_DIR:-${runtime_dir}/.numba_cache}"
-if ! mkdir -p "${numba_cache_dir}" 2>/dev/null; then
+if ! ensure_writable_dir "${numba_cache_dir}"; then
   fallback_numba_cache_dir="/tmp/.numba_cache"
   mkdir -p "${fallback_numba_cache_dir}"
   numba_cache_dir="${fallback_numba_cache_dir}"
@@ -38,16 +60,6 @@ if [ -z "${DATABASE_URL:-}" ]; then
 fi
 
 mkdir -p "${runtime_dir}/logs" "${runtime_dir}/redis" 2>/dev/null || true
-
-if [ -f "${env_file}" ]; then
-  echo "Loading environment from ${env_file}"
-  set -a
-  # shellcheck disable=SC1090
-  . "${env_file}"
-  set +a
-else
-  echo "No env file found at ${env_file}; set TIINGO_API_KEY via .env or Docker env vars." >&2
-fi
 
 if [ "${REDIS_ENABLED}" = "true" ] || [ "${ENABLE_REDIS_CACHE}" = "true" ] || [ "${USE_REDIS_CACHE}" = "true" ]; then
   : "${REDIS_URL:=redis://127.0.0.1:6379/0}"
