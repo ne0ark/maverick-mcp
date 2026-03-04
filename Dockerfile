@@ -11,6 +11,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     ENV_FILE="/config/.env" \
+    NUMBA_CACHE_DIR="/config/.numba_cache" \
     PORT=8000 \
     UV_CACHE_DIR=/tmp/uv-cache
 
@@ -41,6 +42,8 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir.
 RUN useradd --create-home --home-dir /config --shell /usr/sbin/nologin mcp
+RUN mkdir -p /config/.numba_cache \
+    && chown -R mcp:mcp /config
 USER mcp
 WORKDIR /config
 
