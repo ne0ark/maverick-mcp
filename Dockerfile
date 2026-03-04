@@ -45,6 +45,7 @@ RUN apt-get update \
 RUN pip install --upgrade pip \
     && pip install uv \
     && pip install vectorbt \
+    && python -c "import vectorbt" \
     && pip install "git+${MAVERICK_MCP_REPO}@${MAVERICK_MCP_REF}"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -59,4 +60,4 @@ WORKDIR /config
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["sh", "-c", "exec uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uv run --with vectorbt python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
