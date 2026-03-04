@@ -1,0 +1,113 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+  workflow_dispatch:
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: maverick-mcp:latest
+          build-args: |
+            MAVERICK_MCP_REF=main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start backing services
+        run: docker compose up -d postgres redis
+
+      - name: Wait for backing services to be healthy
+        run: |
+          for svc in postgres redis; do
+            echo "Waiting for $svc to be healthy..."
+            for i in $(seq 1 30); do
+              health=$(docker inspect --format='{{.State.Health.Status}}' \
+                "$(docker compose ps -q $svc)" 2>/dev/null || echo "")
+              if [ "$health" = "healthy" ]; then
+                echo "$svc is healthy"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "Timed out waiting for $svc"
+                docker compose logs "$svc"
+                exit 1
+              fi
+              sleep 2
+            done
+          done
+
+      - name: Start backend
+        run: |
+          docker compose up -d backend
+        env:
+          TIINGO_API_KEY: ${{ secrets.TIINGO_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Wait for backend to be ready
+        run: |
+          echo "Waiting for backend on port 8000..."
+          for i in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8000/sse 2>/dev/null)
+            if [ "$status" != "000" ]; then
+              echo "Backend is ready (HTTP $status)"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Timed out waiting for backend"
+              docker compose logs backend
+              exit 1
+            fi
+            sleep 3
+          done
+
+      - name: Smoke test - verify MCP SSE endpoint responds
+        run: |
+          # Verify the server responds on at least one expected path.
+          # The SSE transport serves on /sse; the root may return 404 but must not refuse connections.
+          status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 http://localhost:8000/sse 2>/dev/null)
+          if [ "$status" = "000" ]; then
+            echo "ERROR: backend did not respond (connection refused or timeout)"
+            docker compose logs backend
+            exit 1
+          fi
+          echo "Smoke test passed - backend responded with HTTP $status"
+
+      - name: Show backend logs
+        if: always()
+        run: docker compose logs backend
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
