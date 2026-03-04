@@ -1,10 +1,8 @@
 name: Build and Publish Docker Images
 
 on:
- # schedule:
- #  - cron: '0 3 * * *'
-  release:
-    types: [published]
+  schedule:
+    - cron: '*/5 * * * *'
 
   push:
     branches:
@@ -15,9 +13,6 @@ on:
     paths-ignore:
       - ".devcontainer/**"
       - ".editorconfig"
-      - ".github/**"
-      - ".last_release"
-      - "!.github/workflows/docker.yml" # Still run on changes to this file
       - ".gitignore"
       - ".pre-commit-config.yaml"
       - "**.md"
@@ -46,19 +41,6 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # A new tagged release is published, which builds :tag and :latest
-      - name: Build and push :tag
-        if: github.event_name == 'release'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/spoofdpi:${{ github.event.release.tag_name }}
-            ${{ secrets.DOCKER_HUB_USERNAME }}/spoofdpi:latest
-          platforms: linux/amd64
-          # Don't use the cache for release images to ensure everything is up to date
-
       # main branch push, which builds :main
       - name: Build and push :main
         if: github.event_name == 'push'
@@ -67,12 +49,12 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/spoofdpi:main
+            ${{ secrets.DOCKER_HUB_USERNAME }}/maverick-mcp:main
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-          # Cron job: Build and push images every 5 minutes
+      # Cron job: Build and push images every 5 minutes
       - name: Build and push from cron
         if: github.event_name == 'schedule'
         uses: docker/build-push-action@v5
@@ -80,5 +62,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_USERNAME }}/spoofdpi:main
+            ${{ secrets.DOCKER_HUB_USERNAME }}/maverick-mcp:main
           platforms: linux/amd64
