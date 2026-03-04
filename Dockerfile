@@ -37,6 +37,7 @@ RUN pip install --upgrade pip \
     && pip install "git+https://github.com/wshobson/maverick-mcp.git@${MAVERICK_MCP_REF}"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir.
 RUN useradd --create-home --home-dir /config --shell /usr/sbin/nologin mcp
@@ -47,4 +48,4 @@ WORKDIR /config
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["sh", "-c", "exec uv run python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
