@@ -8,7 +8,7 @@ This file documents recommended Unraid template variables for running the
 - The image runs as non-root user `mcp`.
 - `/config` is the container working directory and should be mapped to appdata.
 - Entrypoint (under `tini`) loads `${ENV_FILE}` (default `/config/.env`) when present, then executes container `CMD`.
-- Startup command is controlled by `MCP_COMMAND`.
+- Startup command is controlled by `MCP_COMMAND` (defaults to module execution).
 - Dockerfile installs TA-Lib (Linux native dependency) and exposes TCP `8000` by default for HTTP/SSE style deployment.
 
 ## Unraid template fields
@@ -24,7 +24,7 @@ This file documents recommended Unraid template variables for running the
 
 | Key | Default | Required | Description |
 |---|---|---:|---|
-| `MCP_COMMAND` | `maverick-mcp` | No | Default command used by `CMD` (`sh -c ${MCP_COMMAND}`). |
+| `MCP_COMMAND` | `python -m maverick_mcp` | No | Default command used by `CMD` (`sh -c ${MCP_COMMAND}`); avoids missing console-script issues. |
 | `ENV_FILE` | `/config/.env` | No | In-container `.env` file path loaded by entrypoint when file exists. |
 | `PORT` | `8000` | Recommended | Service port value used by your runtime command/application config. |
 

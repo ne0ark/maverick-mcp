@@ -10,7 +10,7 @@ ARG TA_LIB_VERSION=0.6.4
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    MCP_COMMAND="maverick-mcp" \
+    MCP_COMMAND="python -m maverick_mcp" \
     ENV_FILE="/config/.env" \
     PORT=8000
 
