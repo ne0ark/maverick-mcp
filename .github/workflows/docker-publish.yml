@@ -1,0 +1,56 @@
+name: Check for new maverick-mcp main commit
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Runs every 5 minutes
+
+jobs:
+  check-main-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check latest source commit from maverick-mcp main branch
+        id: check_main
+        run: |
+          commits_response=$(curl -fsSL "https://api.github.com/repos/wshobson/maverick-mcp/commits?sha=main&per_page=20")
+          latest_commit=$(echo "$commits_response" | jq -r '[.[] | select(.commit.message | startswith("Update latest main commit to ") | not)][0].sha')
+
+          if [ -z "$latest_commit" ] || [ "$latest_commit" = "null" ]; then
+            echo "Failed to resolve latest source commit from main history."
+            exit 1
+          fi
+
+          echo "Latest source main commit is $latest_commit"
+
+          if [ -f .last_main_commit ]; then
+            last_known_commit=$(cat .last_main_commit)
+            echo "Last known main source commit is $last_known_commit"
+          else
+            last_known_commit=""
+          fi
+
+          if [ "$latest_commit" != "$last_known_commit" ]; then
+            echo "New source main commit detected: $latest_commit"
+            echo "latest_commit=$latest_commit" >> $GITHUB_ENV
+            echo "latest_commit_short=${latest_commit:0:7}" >> $GITHUB_ENV
+          else
+            echo "No new source commit found on main."
+            exit 0
+          fi
+
+      - name: Save the new main commit
+        if: env.latest_commit
+        run: |
+          echo ${{ env.latest_commit }} > .last_main_commit
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .last_main_commit
+          if git diff --cached --quiet; then
+            echo "No tracked state changes to commit."
+            exit 0
+          fi
+          git commit -m "Update latest main commit to ${{ env.latest_commit_short }}"
+          git push
