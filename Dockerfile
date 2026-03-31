@@ -4,8 +4,8 @@ LABEL org.opencontainers.image.title="maverick-mcp" \
       org.opencontainers.image.description="Container image for the Maverick MCP server" \
       org.opencontainers.image.source="https://github.com/wshobson/maverick-mcp"
 
-ARG MAVERICK_MCP_REF=fix/mcp-discovery-and-docker-port
-ARG MAVERICK_MCP_REPO=https://github.com/wshobson/maverick-mcpp.git
+ARG MAVERICK_MCP_REF=main
+ARG MAVERICK_MCP_REPO=https://github.com/wshobson/maverick-mcp.git
 ARG TA_LIB_VERSION=0.6.4
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
