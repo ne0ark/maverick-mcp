@@ -18,7 +18,7 @@ jobs:
       - name: Check latest source commit from maverick-mcp main branch
         id: check_main
         run: |
-          source_repo="BobDenar1212/maverick-mcp"
+          source_repo="wshobson/maverick-mcp"
           commits_response=$(curl -fsSL "https://api.github.com/repos/${source_repo}/commits?sha=main&per_page=20")
           latest_commit=$(echo "$commits_response" | jq -r '[.[] | select(.commit.message | startswith("Update latest main commit to ") | not)][0].sha')
 
@@ -48,7 +48,7 @@ jobs:
       - name: Save the new main commit
         if: env.latest_commit
         env:
-          EXPECTED_REPO: BobDenar1212/maverick-mcp
+          EXPECTED_REPO: wshobson/maverick-mcp
         run: |
           if [ "${GITHUB_REPOSITORY}" != "${EXPECTED_REPO}" ]; then
             echo "Skipping state commit/push for fork repository ${GITHUB_REPOSITORY}."
