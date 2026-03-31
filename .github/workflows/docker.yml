@@ -23,7 +23,7 @@ on:
       - "tests/**"
 
 env:
-  MAVERICK_MCP_REPO: https://github.com/BobDenar1212/maverick-mcp.git
+  MAVERICK_MCP_REPO: https://github.com/wshobson/maverick-mcp.git
 
 jobs:
   build-and-push-images:
