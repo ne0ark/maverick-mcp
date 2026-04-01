@@ -131,6 +131,7 @@ If you prefer to add the container manually:
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Cache directory for Numba/pandas-ta JIT compilation. |
 | `UMASK` | `002` | No | Process umask for group-writable files on Unraid shares. |
 | `PORT` | `8000` | No | Port variable for compatibility; the default CMD binds port 8000. |
+| `TRANSPORT` | `sse` | No | MCP transport protocol: `sse` (SSE on `/sse/`) or `streamable-http` (HTTP on `/mcp/`). These are mutually exclusive. |
 | `RUNTIME_DIR` | `/config` | No | Working directory for runtime writes (SQLite DB, logs). |
 | `ENV_FILE` | `/config/.env` | No | Path to `.env` file loaded by the entrypoint. |
 | `UV_CACHE_DIR` | `/tmp/uv-cache` | No | Cache directory for the `uv` package manager. |
@@ -196,15 +197,17 @@ The `/config` path is the single mount point you need. It stores:
 |---|---|---|---|
 | `8000` | `8000` | TCP | MCP SSE/HTTP server endpoint |
 
-The server exposes these endpoints:
+The server exposes endpoints depending on the active transport (controlled by the `TRANSPORT` env variable):
 
-| Endpoint | URL |
-|---|---|
-| SSE transport | `http://<host>:8000/sse/` |
-| HTTP transport | `http://<host>:8000/mcp/` |
-| Health check | `http://<host>:8000/health` |
+| Transport (`TRANSPORT=...`) | Endpoint URL | Notes |
+|---|---|---|
+| `sse` (default) | `http://<host>:8000/sse/` | SSE transport. Trailing slash **required** -- a 307 redirect from `/sse` to `/sse/` will break tool registration. |
+| `streamable-http` | `http://<host>:8000/mcp/` | HTTP streaming transport. Use when your MCP client supports streamable HTTP. |
 
-> **Note:** The trailing slash on `/sse/` is **required** — a 307 redirect from `/sse` to `/sse/` will break tool registration in Claude Desktop.
+> **Important:** These transports are **mutually exclusive**. Only one endpoint is active at a time. The `/mcp/` endpoint is only available when `TRANSPORT=streamable-http`. To switch transports:
+> ```bash
+> docker run -d -e TRANSPORT=streamable-http -p 8000:8000 ne0ark/maverick-mcp:latest
+> ```
 
 ---
 

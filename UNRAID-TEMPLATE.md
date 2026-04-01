@@ -238,7 +238,18 @@ If port `8000` is already in use on your Unraid server, map to a different host 
 |---|---|
 | `8000` | `18000` (or any free port) |
 
-Update your MCP client connection URLs accordingly: `http://<unraid-ip>:18000/sse/`
+Update your MCP client connection URLs accordingly: `http://<unraid-ip>:18000/sse/` (or `/mcp/` if using `TRANSPORT=streamable-http`)
+
+### Changing the Transport Mode
+
+The container defaults to SSE transport (`/sse/` endpoint). To use streamable HTTP (`/mcp/` endpoint) instead, add the `TRANSPORT` environment variable:
+
+| Variable | Value | Endpoint |
+|---|---|---|
+| `TRANSPORT` | `sse` (default) | `http://<host>:8000/sse/` |
+| `TRANSPORT` | `streamable-http` | `http://<host>:8000/mcp/` |
+
+These are mutually exclusive -- only one transport runs at a time.
 
 ### Image Updates
 

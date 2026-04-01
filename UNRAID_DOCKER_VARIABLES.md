@@ -10,7 +10,7 @@ This file documents recommended Unraid template variables for running the
 - Entrypoint (under `tini`) loads `.env` from `${ENV_FILE}` (default `/config/.env`) with fallback checks, then executes container `CMD` from `${RUNTIME_DIR}`.
 - Entrypoint applies `${UMASK}` (default `002`) for Unraid-friendly file permissions.
 - Default command runs the upstream SSE server via:
-  `uv run --with vectorbt python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port 8000`.
+  `uv run --with vectorbt python -m maverick_mcp.api.server --transport ${TRANSPORT:-sse} --host 0.0.0.0 --port 8000`.
 - Dockerfile installs TA-Lib and `vectorbt` dependencies, and exposes TCP `8000` by default for HTTP/SSE deployment.
 - TA-Lib C library build defaults to `0.6.4` (via `TA_LIB_VERSION` build arg), which is the recommended upstream release line for current builds.
 
@@ -32,6 +32,7 @@ This file documents recommended Unraid template variables for running the
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Writable cache directory used by Numba/pandas-ta to avoid JIT cache errors on read-only site-packages. |
 | `UMASK` | `002` | No | Process umask applied at startup for group-writable files on Unraid shares. |
 | `PORT` | `8000` | Optional | Kept for compatibility with existing `.env` files; default CMD currently binds fixed port `8000`. |
+| `TRANSPORT` | `sse` | No | MCP transport protocol: `sse` (SSE on `/sse/`) or `streamable-http` (HTTP on `/mcp/`). These are mutually exclusive -- only one endpoint is active at a time. |
 | `RUNTIME_DIR` | `/config` | No | Working directory used for runtime writes (SQLite DB and logs when app uses relative paths). |
 | `ENV_FILE` | `/config/.env` | No | Preferred `.env` path read by entrypoint before startup initialization. |
 | `REDIS_ENABLED` | `true` | No | Enables built-in Redis startup and Redis cache integration by default. |

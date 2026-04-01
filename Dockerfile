@@ -60,4 +60,4 @@ WORKDIR /config
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
-CMD ["sh", "-c", "exec uv run --with vectorbt python -m maverick_mcp.api.server --transport sse --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uv run --with vectorbt python -m maverick_mcp.api.server --transport ${TRANSPORT:-sse} --host 0.0.0.0 --port ${PORT:-8000}"]

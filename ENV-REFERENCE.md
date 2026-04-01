@@ -15,6 +15,7 @@ These variables control the container's runtime behavior. They are set in the Do
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | No | Cache directory for Numba JIT compilation (used by pandas-ta). Prevents cache errors on read-only site-packages. Falls back to `/tmp/.numba_cache` if not writable. |
 | `UMASK` | `002` | No | Process umask applied at container startup. `002` ensures group-writable files on Unraid shares. |
 | `PORT` | `8000` | No | Port variable for compatibility with existing `.env` files. The default CMD binds to port 8000 via `${PORT:-8000}`. |
+| `TRANSPORT` | `sse` | No | MCP transport protocol. Options: `sse` (SSE on `/sse/`), `streamable-http` (HTTP on `/mcp/`). See [Transport Modes](#transport-modes) below. |
 | `RUNTIME_DIR` | `/config` | No | Working directory for runtime writes: SQLite database, logs, and Redis data. Falls back to `/tmp/maverick-mcp` if not writable. |
 | `ENV_FILE` | `/config/.env` | No | Explicit path to the `.env` file. The entrypoint searches for a readable file at `$ENV_FILE`, then `$RUNTIME_DIR/.env`, then `/config/.env`, then `/workspace/.env`. |
 | `UV_CACHE_DIR` | `/tmp/uv-cache` | No | Cache directory for the `uv` Python package manager. Set to `/tmp` since it doesn't need persistence. |
@@ -23,6 +24,22 @@ These variables control the container's runtime behavior. They are set in the Do
 | `USE_REDIS_CACHE` | `true` | No | Compatibility toggle for upstream Redis cache integration. Kept enabled by default. |
 | `DATABASE_URL` | `sqlite:///${RUNTIME_DIR}/maverick_mcp.db` | No | Database connection string. Defaults to SQLite in the runtime directory. Set to a PostgreSQL URL for external database. If `RUNTIME_DIR` falls back to `/tmp`, the database path adjusts accordingly. |
 | `REDIS_URL` | `redis://127.0.0.1:6379/0` | No | Redis connection URL. Defaults to the in-container Redis instance. Change only if using an external Redis server. |
+
+### Transport Modes
+
+The `TRANSPORT` variable controls which MCP protocol the server uses. Only one transport can be active at a time. The available endpoint depends on the chosen transport:
+
+| Transport | Endpoint | Use Case |
+|---|---|---|
+| `sse` (default) | `http://<host>:8000/sse/` | Persistent SSE connections. Most compatible with mcp-remote bridges. |
+| `streamable-http` | `http://<host>:8000/mcp/` | HTTP-based streaming. Works with newer MCP clients that support streamable HTTP. |
+
+**Note:** The `/mcp/` endpoint is **only** available when `TRANSPORT=streamable-http`. The `/sse/` endpoint is **only** available when `TRANSPORT=sse` (the default). These are mutually exclusive -- the server runs one transport at a time.
+
+To switch to streamable-http:
+```bash
+docker run -d -e TRANSPORT=streamable-http -p 8000:8000 ne0ark/maverick-mcp:latest
+```
 
 ### Writable Directory Fallback Behavior
 
