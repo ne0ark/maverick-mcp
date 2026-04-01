@@ -14,6 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME="/config" \
     XDG_CACHE_HOME="/config/.cache" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
+    NLTK_DATA="/config/nltk_data" \
     PORT=8000 \
     RUNTIME_DIR="/config" \
     UMASK=002 \
@@ -48,10 +49,15 @@ RUN pip install --upgrade pip \
     && python -c "import vectorbt" \
     && pip install "git+${MAVERICK_MCP_REPO}@${MAVERICK_MCP_REF}"
 
+# Pre-download NLTK data during build (runs as root, writes to site-packages).
+# This prevents runtime PermissionError when the app runs as UID 99.
+ RUN python -c "import nltk; nltk.download('punkt_tab'); nltk.download('vader_lexicon'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')" \
+    || echo "NLTK download skipped (nltk not in dependencies)"
+
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir (UID:GID 99:100 => nobody:users on Unraid).
-RUN mkdir -p /config/.numba_cache /config/.cache \
+RUN mkdir -p /config/.numba_cache /config/.cache /config/nltk_data \
     && chown -R 99:100 /config
 USER 99:100
 WORKDIR /config

@@ -24,6 +24,7 @@ These variables control the container's runtime behavior. They are set in the Do
 | `USE_REDIS_CACHE` | `true` | No | Compatibility toggle for upstream Redis cache integration. Kept enabled by default. |
 | `DATABASE_URL` | `sqlite:///${RUNTIME_DIR}/maverick_mcp.db` | No | Database connection string. Defaults to SQLite in the runtime directory. Set to a PostgreSQL URL for external database. If `RUNTIME_DIR` falls back to `/tmp`, the database path adjusts accordingly. |
 | `REDIS_URL` | `redis://127.0.0.1:6379/0` | No | Redis connection URL. Defaults to the in-container Redis instance. Change only if using an external Redis server. |
+| `NLTK_DATA` | `/config/nltk_data` | No | NLTK data directory for NLP tokenizers (punkt, vader_lexicon, stopwords). Pre-downloaded during build; overrides the default site-packages path to avoid permission errors at runtime. |
 
 ### Transport Modes
 
