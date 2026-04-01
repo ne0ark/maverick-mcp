@@ -15,6 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     XDG_CACHE_HOME="/config/.cache" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
     NLTK_DATA="/config/nltk_data" \
+    MPLBACKEND=agg \
     PORT=8000 \
     RUNTIME_DIR="/config" \
     UMASK=002 \
@@ -51,7 +52,7 @@ RUN pip install --upgrade pip \
 
 # Pre-download NLTK data during build (runs as root, writes to site-packages).
 # This prevents runtime PermissionError when the app runs as UID 99.
- RUN python -c "import nltk; nltk.download('punkt_tab'); nltk.download('vader_lexicon'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')" \
+RUN python -c "import nltk; nltk.download('punkt_tab'); nltk.download('vader_lexicon'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')" \
     || echo "NLTK download skipped (nltk not in dependencies)"
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
