@@ -50,10 +50,34 @@ RUN pip install --upgrade pip \
     && python -c "import vectorbt" \
     && pip install "git+${MAVERICK_MCP_REPO}@${MAVERICK_MCP_REF}"
 
-# Pre-download NLTK data during build (runs as root, writes to site-packages).
-# This prevents runtime PermissionError when the app runs as UID 99.
-RUN python -c "import nltk; nltk.download('punkt_tab'); nltk.download('vader_lexicon'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')" \
-    || echo "NLTK download skipped (nltk not in dependencies)"
+# Pre-download required NLTK data into /config/nltk_data during build.
+RUN python - <<'PY'
+import importlib.util
+import os
+
+target_dir = os.environ.get("NLTK_DATA", "/config/nltk_data")
+resources = (
+    "punkt_tab",
+    "vader_lexicon",
+    "stopwords",
+    "averaged_perceptron_tagger",
+)
+
+if importlib.util.find_spec("nltk") is None:
+    print("Skipping NLTK data download because nltk is not installed.")
+    raise SystemExit(0)
+
+import nltk
+
+os.makedirs(target_dir, exist_ok=True)
+
+for resource in resources:
+    print(f"Downloading NLTK resource: {resource}")
+    if not nltk.download(resource, download_dir=target_dir):
+        raise SystemExit(f"Failed to download required NLTK resource: {resource}")
+
+print(f"Downloaded NLTK resources to {target_dir}")
+PY
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
