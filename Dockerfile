@@ -15,6 +15,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     XDG_CACHE_HOME="/config/.cache" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
     NLTK_DATA="/config/nltk_data" \
+    MAVERICK_DATA_DIR="/config/data" \
+    MAVERICK_VECTOR_STORE_PATH="/config/data/research_vectors" \
+    MAVERICK_MEMORY_DB_PATH="/config/data/memory_store.db" \
+    MAVERICK_CHECKPOINT_DB_PATH="/config/data/checkpoints.db" \
     MPLBACKEND=agg \
     PORT=8000 \
     RUNTIME_DIR="/config" \
@@ -82,7 +86,7 @@ PY
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir (UID:GID 99:100 => nobody:users on Unraid).
-RUN mkdir -p /config/.numba_cache /config/.cache /config/nltk_data \
+RUN mkdir -p /config/.numba_cache /config/.cache /config/nltk_data /config/data/research_vectors \
     && chown -R 99:100 /config
 USER 99:100
 WORKDIR /config
