@@ -99,6 +99,28 @@ ensure_writable_dir() {
   rm -f "${probe_file}" 2>/dev/null || true
   return 0
 }
+normalize_runtime_path() {
+  path_value="$1"
+  case "${path_value}" in
+    "")
+      printf '%s\n' "${runtime_dir}"
+      ;;
+    /*)
+      printf '%s\n' "${path_value}"
+      ;;
+    ./*)
+      printf '%s\n' "${runtime_dir}/${path_value#./}"
+      ;;
+    *)
+      printf '%s\n' "${runtime_dir}/${path_value}"
+      ;;
+  esac
+}
+ensure_writable_file_parent() {
+  file_path="$1"
+  parent_dir=$(dirname "${file_path}")
+  ensure_writable_dir "${parent_dir}"
+}
 runtime_dir="${RUNTIME_DIR:-/config}"
 if ! ensure_writable_dir "${runtime_dir}"; then
   fallback_runtime_dir="/tmp/maverick-mcp"
@@ -145,6 +167,50 @@ if ! ensure_writable_dir "${nltk_data_dir}"; then
   echo "NLTK data path ${NLTK_DATA:-${runtime_dir}/nltk_data} is not writable; using ${nltk_data_dir}" >&2
 fi
 export NLTK_DATA="${nltk_data_dir}"
+data_dir=$(normalize_runtime_path "${MAVERICK_DATA_DIR:-${runtime_dir}/data}")
+if ! ensure_writable_dir "${data_dir}"; then
+  fallback_data_dir="${runtime_dir}/data"
+  if ! ensure_writable_dir "${fallback_data_dir}"; then
+    fallback_data_dir="/tmp/maverick-mcp-data"
+    mkdir -p "${fallback_data_dir}"
+  fi
+  data_dir="${fallback_data_dir}"
+  echo "Maverick data path ${MAVERICK_DATA_DIR:-${runtime_dir}/data} is not writable; using ${data_dir}" >&2
+fi
+export MAVERICK_DATA_DIR="${data_dir}"
+vector_store_path=$(normalize_runtime_path "${MAVERICK_VECTOR_STORE_PATH:-${data_dir}/research_vectors}")
+if ! ensure_writable_dir "${vector_store_path}"; then
+  fallback_vector_store_path="${data_dir}/research_vectors"
+  if ! ensure_writable_dir "${fallback_vector_store_path}"; then
+    fallback_vector_store_path="/tmp/maverick-mcp-research_vectors"
+    mkdir -p "${fallback_vector_store_path}"
+  fi
+  vector_store_path="${fallback_vector_store_path}"
+  echo "Vector store path ${MAVERICK_VECTOR_STORE_PATH:-${data_dir}/research_vectors} is not writable; using ${vector_store_path}" >&2
+fi
+export MAVERICK_VECTOR_STORE_PATH="${vector_store_path}"
+memory_db_path=$(normalize_runtime_path "${MAVERICK_MEMORY_DB_PATH:-${data_dir}/memory_store.db}")
+if ! ensure_writable_file_parent "${memory_db_path}"; then
+  fallback_memory_db_path="${data_dir}/memory_store.db"
+  if ! ensure_writable_file_parent "${fallback_memory_db_path}"; then
+    fallback_memory_db_path="/tmp/maverick-mcp-data/memory_store.db"
+    mkdir -p "$(dirname "${fallback_memory_db_path}")"
+  fi
+  memory_db_path="${fallback_memory_db_path}"
+  echo "Memory DB path ${MAVERICK_MEMORY_DB_PATH:-${data_dir}/memory_store.db} is not writable; using ${memory_db_path}" >&2
+fi
+export MAVERICK_MEMORY_DB_PATH="${memory_db_path}"
+checkpoint_db_path=$(normalize_runtime_path "${MAVERICK_CHECKPOINT_DB_PATH:-${data_dir}/checkpoints.db}")
+if ! ensure_writable_file_parent "${checkpoint_db_path}"; then
+  fallback_checkpoint_db_path="${data_dir}/checkpoints.db"
+  if ! ensure_writable_file_parent "${fallback_checkpoint_db_path}"; then
+    fallback_checkpoint_db_path="/tmp/maverick-mcp-data/checkpoints.db"
+    mkdir -p "$(dirname "${fallback_checkpoint_db_path}")"
+  fi
+  checkpoint_db_path="${fallback_checkpoint_db_path}"
+  echo "Checkpoint DB path ${MAVERICK_CHECKPOINT_DB_PATH:-${data_dir}/checkpoints.db} is not writable; using ${checkpoint_db_path}" >&2
+fi
+export MAVERICK_CHECKPOINT_DB_PATH="${checkpoint_db_path}"
 if [ -z "${DATABASE_URL:-}" ]; then
   export DATABASE_URL="sqlite:///${runtime_dir}/maverick_mcp.db"
 fi
