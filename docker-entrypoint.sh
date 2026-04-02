@@ -134,6 +134,17 @@ if ! ensure_writable_dir "${numba_cache_dir}"; then
   echo "NUMBA cache path ${NUMBA_CACHE_DIR:-${runtime_dir}/.numba_cache} is not writable; using ${fallback_numba_cache_dir}" >&2
 fi
 export NUMBA_CACHE_DIR="${numba_cache_dir}"
+nltk_data_dir="${NLTK_DATA:-${runtime_dir}/nltk_data}"
+if ! ensure_writable_dir "${nltk_data_dir}"; then
+  fallback_nltk_data_dir="${runtime_dir}/nltk_data"
+  if ! ensure_writable_dir "${fallback_nltk_data_dir}"; then
+    fallback_nltk_data_dir="/tmp/nltk_data"
+    mkdir -p "${fallback_nltk_data_dir}"
+  fi
+  nltk_data_dir="${fallback_nltk_data_dir}"
+  echo "NLTK data path ${NLTK_DATA:-${runtime_dir}/nltk_data} is not writable; using ${nltk_data_dir}" >&2
+fi
+export NLTK_DATA="${nltk_data_dir}"
 if [ -z "${DATABASE_URL:-}" ]; then
   export DATABASE_URL="sqlite:///${runtime_dir}/maverick_mcp.db"
 fi

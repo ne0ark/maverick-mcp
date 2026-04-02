@@ -24,6 +24,7 @@ These variables control the container's runtime behavior. They are set in the Do
 | `USE_REDIS_CACHE` | `true` | No | Compatibility toggle for upstream Redis cache integration. Kept enabled by default. |
 | `DATABASE_URL` | `sqlite:///${RUNTIME_DIR}/maverick_mcp.db` | No | Database connection string. Defaults to SQLite in the runtime directory. Set to a PostgreSQL URL for external database. If `RUNTIME_DIR` falls back to `/tmp`, the database path adjusts accordingly. |
 | `REDIS_URL` | `redis://127.0.0.1:6379/0` | No | Redis connection URL. Defaults to the in-container Redis instance. Change only if using an external Redis server. |
+| `NLTK_DATA` | `/config/nltk_data` | No | NLTK data directory. The image pre-downloads `punkt_tab`, `vader_lexicon`, `stopwords`, and `averaged_perceptron_tagger` into this path during build. Falls back to `$RUNTIME_DIR/nltk_data` or `/tmp/nltk_data` if the configured path is not writable at runtime. |
 
 ### Transport Modes
 
@@ -51,6 +52,7 @@ The entrypoint checks writability of key directories and falls back automaticall
 | `HOME` | `/config` | `$RUNTIME_DIR` or `/tmp/maverick-mcp-home` |
 | `XDG_CACHE_HOME` | `/config/.cache` | `/tmp/.cache` |
 | `NUMBA_CACHE_DIR` | `/config/.numba_cache` | `/tmp/.numba_cache` |
+| `NLTK_DATA` | `/config/nltk_data` | `$RUNTIME_DIR/nltk_data` or `/tmp/nltk_data` |
 
 When a fallback is activated, the entrypoint logs a warning to stderr. All fallbacks are to `/tmp` which is ephemeral — data will not survive container restarts.
 

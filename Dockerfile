@@ -14,6 +14,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HOME="/config" \
     XDG_CACHE_HOME="/config/.cache" \
     NUMBA_CACHE_DIR="/config/.numba_cache" \
+    NLTK_DATA="/config/nltk_data" \
+    MPLBACKEND=agg \
     PORT=8000 \
     RUNTIME_DIR="/config" \
     UMASK=002 \
@@ -48,10 +50,39 @@ RUN pip install --upgrade pip \
     && python -c "import vectorbt" \
     && pip install "git+${MAVERICK_MCP_REPO}@${MAVERICK_MCP_REF}"
 
+# Pre-download required NLTK data into /config/nltk_data during build.
+RUN python - <<'PY'
+import importlib.util
+import os
+
+target_dir = os.environ.get("NLTK_DATA", "/config/nltk_data")
+resources = (
+    "punkt_tab",
+    "vader_lexicon",
+    "stopwords",
+    "averaged_perceptron_tagger",
+)
+
+if importlib.util.find_spec("nltk") is None:
+    print("Skipping NLTK data download because nltk is not installed.")
+    raise SystemExit(0)
+
+import nltk
+
+os.makedirs(target_dir, exist_ok=True)
+
+for resource in resources:
+    print(f"Downloading NLTK resource: {resource}")
+    if not nltk.download(resource, download_dir=target_dir):
+        raise SystemExit(f"Failed to download required NLTK resource: {resource}")
+
+print(f"Downloaded NLTK resources to {target_dir}")
+PY
+
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Unraid-friendly writable app dir (UID:GID 99:100 => nobody:users on Unraid).
-RUN mkdir -p /config/.numba_cache /config/.cache \
+RUN mkdir -p /config/.numba_cache /config/.cache /config/nltk_data \
     && chown -R 99:100 /config
 USER 99:100
 WORKDIR /config
